@@ -1,0 +1,12 @@
+[
+  {
+    "repo": "realkryssbee/pontarika",
+    "client": { "nom": "Pontarika — ciel natal Ixelles", "vertical": "astrologie", "statut": "actif" },
+    "projet": { "nom": "Site Pontarika (astrologie Ixelles)", "statut": "en_cours" }
+  },
+  {
+    "repo": "realkryssbee/optima-mind-v2",
+    "clientExistant": "À REMPLACER PAR LE NOM EXACT D'UN CLIENT DÉJÀ EN BASE",
+    "projet": { "nom": "Optima Mind — refonte du site" }
+  }
+]

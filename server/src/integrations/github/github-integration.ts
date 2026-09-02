@@ -72,11 +72,23 @@ export class GithubIntegration implements IntegrationService {
     const { owner, repo } = this.splitRepo(target.identifiantExterne);
     const fullName = `${owner}/${repo}`;
 
-    const data = await this.get(`/repos/${fullName}/commits`, {
-      query: { per_page: '30', since: options.since.toISOString() },
-      tool: GITHUB_TOOL_NAMES.commits,
-      toolArgs: { repo: fullName },
-    });
+    let data: Json;
+    try {
+      data = await this.get(`/repos/${fullName}/commits`, {
+        query: { per_page: '30', since: options.since.toISOString() },
+        tool: GITHUB_TOOL_NAMES.commits,
+        toolArgs: { repo: fullName },
+      });
+    } catch (error) {
+      // Cas bénin : dépôt sans aucun commit (GitHub répond 409 "Git
+      // Repository is empty"). Ce n'est pas un échec du branchement : il n'y
+      // a simplement aucun événement à remonter. L'aperçu (metadata) reste
+      // rafraîchi par ailleurs.
+      if (this.isEmptyRepoError(error)) {
+        return [];
+      }
+      throw error;
+    }
 
     const commits = Array.isArray(data) ? data : [];
     return commits.map((commit: Json) => {
@@ -93,6 +105,15 @@ export class GithubIntegration implements IntegrationService {
         horodatage: author?.date ? new Date(author.date) : new Date(),
       };
     });
+  }
+
+  /** GitHub 409 "Git Repository is empty" : dépôt sans commit. */
+  private isEmptyRepoError(error: unknown): boolean {
+    return (
+      error instanceof ExternalServiceError &&
+      error.statusCode === 409 &&
+      error.message.toLowerCase().includes('empty')
+    );
   }
 
   /**

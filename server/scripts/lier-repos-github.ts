@@ -150,18 +150,23 @@ async function main(): Promise<void> {
 
       // ---- 1. Client -------------------------------------------------------
       let clientId: string | null = null;
+      // Vertical de repli pour le projet : hérité du client (un projet
+      // rattaché à un client existant doit prendre SON vertical, pas le défaut).
+      let clientVertical: string | null = null;
       if (entree.clientExistant) {
-        const ligne = await db.query('select id from clients where nom = $1', [entree.clientExistant]);
+        const ligne = await db.query('select id, vertical from clients where nom = $1', [entree.clientExistant]);
         if (ligne.rows.length === 0) {
           throw new Error(`Client existant introuvable : "${entree.clientExistant}".`);
         }
         clientId = ligne.rows[0].id;
-        console.info(`  → client existant : ${entree.clientExistant}`);
+        clientVertical = ligne.rows[0].vertical;
+        console.info(`  → client existant : ${entree.clientExistant} [${clientVertical}]`);
       } else {
         const c = entree.client as MappingClient;
-        const ligne = await db.query('select id from clients where nom = $1', [c.nom]);
+        const ligne = await db.query('select id, vertical from clients where nom = $1', [c.nom]);
         if (ligne.rows.length > 0) {
           clientId = ligne.rows[0].id;
+          clientVertical = ligne.rows[0].vertical;
           console.info(`  → client déjà présent : ${c.nom}`);
         } else if (sec) {
           console.info(`  → (dry-run) créerait le client : ${c.nom} [${c.vertical ?? 'vertical à préciser'}]`);
@@ -172,7 +177,8 @@ async function main(): Promise<void> {
             [c.nom, c.vertical ?? 'coachs_sportifs', c.statut ?? 'actif', c.notes ?? null]
           );
           clientId = insere.rows[0].id;
-          console.info(`  → client créé : ${c.nom} [${c.vertical ?? 'coachs_sportifs'}]`);
+          clientVertical = c.vertical ?? 'coachs_sportifs';
+          console.info(`  → client créé : ${c.nom} [${clientVertical}]`);
         }
       }
 
@@ -185,11 +191,11 @@ async function main(): Promise<void> {
         console.info(`  → projet déjà présent : ${projetExistant.rows[0].nom}`);
       } else if (sec) {
         const nom = p.nom ?? nomDepuisRepo(entree.repo);
-        const vertical = p.vertical ?? entree.client?.vertical ?? 'coachs_sportifs';
+        const vertical = p.vertical ?? entree.client?.vertical ?? clientVertical ?? 'coachs_sportifs';
         console.info(`  → (dry-run) créerait le projet : ${nom} [${vertical}]`);
       } else if (clientId) {
         const nom = p.nom ?? nomDepuisRepo(entree.repo);
-        const vertical = p.vertical ?? entree.client?.vertical ?? 'coachs_sportifs';
+        const vertical = p.vertical ?? entree.client?.vertical ?? clientVertical ?? 'coachs_sportifs';
         const insere = await db.query(
           `insert into projets
              (client_id, nom, vertical, statut, depot_github, url_production,

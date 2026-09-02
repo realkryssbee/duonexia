@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# Mapping opérationnel local (miroir de la base, données clients)
+db/mapping-repos.json
+
 # Dépendances
 node_modules/
 

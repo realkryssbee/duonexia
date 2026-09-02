@@ -74,9 +74,17 @@ export interface IntegrationService {
 
 /** Erreur d'appel à un système externe (HTTP, jeton, format…). */
 export class ExternalServiceError extends Error {
-  constructor(message: string, readonly cause?: unknown) {
+  /**
+   * Code HTTP quand l'erreur vient d'une réponse non-2xx (utile pour
+   * distinguer un cas bénin — ex. GitHub 409 « repository empty » — d'un
+   * vrai échec).
+   */
+  readonly statusCode?: number;
+
+  constructor(message: string, statusCode?: number, readonly cause?: unknown) {
     super(message);
     this.name = 'ExternalServiceError';
+    this.statusCode = statusCode;
   }
 }
 

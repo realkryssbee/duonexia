@@ -62,8 +62,12 @@ export function createJournaledHttp(options: JournaledHttpOptions): HttpTranspor
 
           if (!response.ok) {
             const body = await response.text().catch(() => '');
+            // On porte le code HTTP : certains cas bénins (dépôt GitHub vide)
+            // sont absorbés par le module d'intégration au lieu de faire
+            // échouer tout le branchement.
             throw new ExternalServiceError(
-              `Réponse ${response.status} de ${path} : ${body.slice(0, 300)}`
+              `Réponse ${response.status} de ${path} : ${body.slice(0, 300)}`,
+              response.status
             );
           }
           // Certaines routes renvoient 204 ou un corps vide.

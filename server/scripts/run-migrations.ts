@@ -1,12 +1,16 @@
-// scripts/run-migrations.ts — application des migrations SQL dans l'ordre.
+// scripts/run-migrations.ts — application des migrations SQL dans l'ordre,
+// et optionnellement des SEEDS de démonstration (uniquement en dev).
 //
-// Usage : depuis server/, `npm run db:migrate` (les variables viennent de
-// server/.env grâce à dotenv). Les migrations ciblent la base Supabase
-// (distante) : on peut les lancer depuis n'importe quelle machine ; le
-// serveur du VPS n'a pas besoin de les rejouer.
+// Usage (depuis server/, variables via server/.env ou l'environnement) :
+//   npm run db:migrate    -> applique db/migrations/*.sql  (schéma réel)
+//   npm run db:seed       -> applique db/seeds/*.sql       (données démo, JAMAIS en prod)
 //
-// Chaque fichier est appliqué DANS une transaction et enregistré dans
-// schema_migrations : relancer le script est sans effet (idempotent).
+// Décision : le seed de démonstration ne vit PAS dans db/migrations — une
+// base réelle ne doit jamais recevoir de données factices par accident lors
+// d'un `npm run db:migrate`. Chaque fichier est appliqué DANS une
+// transaction et enregistré dans schema_migrations : relancer est sans
+// effet (idempotent). Les migrations ciblent la base Supabase (distante) :
+// on peut les lancer depuis n'importe quelle machine.
 
 import 'dotenv/config';
 import { readdir, readFile } from 'node:fs/promises';
@@ -14,12 +18,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 
-const migrationsDir = fileURLToPath(new URL('../../db/migrations/', import.meta.url));
+// --seed : mode démonstration (db/seeds), sinon migrations (db/migrations).
+const mode = process.argv.includes('--seed') ? 'seed' : 'migrate';
+const dbDir = fileURLToPath(
+  new URL(`../../db/${mode === 'seed' ? 'seeds' : 'migrations'}/`, import.meta.url)
+);
 
 async function main(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL ?? '';
   if (databaseUrl === '') {
-    console.error('[migrate] DATABASE_URL manquante (server/.env).');
+    console.error(`[${mode}] DATABASE_URL manquante (server/.env).`);
     process.exit(1);
   }
 
@@ -42,22 +50,22 @@ async function main(): Promise<void> {
     const appliedRows = await pool.query('select nom from schema_migrations');
     const applied = new Set<string>(appliedRows.rows.map((row) => row.nom));
 
-    const files = (await readdir(migrationsDir))
+    const files = (await readdir(dbDir))
       .filter((file) => file.endsWith('.sql'))
       .sort();
 
     if (files.length === 0) {
-      console.warn('[migrate] Aucun fichier SQL dans db/migrations/.');
+      console.warn(`[${mode}] Aucun fichier SQL dans db/${mode === 'seed' ? 'seeds' : 'migrations'}/.`);
     }
 
     for (const file of files) {
       if (applied.has(file)) {
-        console.info(`[migrate] déjà appliquée, ignorée : ${file}`);
+        console.info(`[${mode}] déjà appliqué, ignoré : ${file}`);
         continue;
       }
-      // migrationsDir est un chemin de fichiers système (fileURLToPath) :
-      // on joint avec path, jamais avec new URL.
-      const sql = await readFile(path.join(migrationsDir, file), 'utf8');
+      // dbDir est un chemin de fichiers système (fileURLToPath) : on joint
+      // avec path.join, jamais avec new URL.
+      const sql = await readFile(path.join(dbDir, file), 'utf8');
 
       const client = await pool.connect();
       try {
@@ -65,10 +73,10 @@ async function main(): Promise<void> {
         await client.query(sql);
         await client.query('insert into schema_migrations (nom) values ($1)', [file]);
         await client.query('commit');
-        console.info(`[migrate] appliquée : ${file}`);
+        console.info(`[${mode}] appliqué : ${file}`);
       } catch (error) {
         await client.query('rollback');
-        console.error(`[migrate] ÉCHEC sur ${file} (transaction annulée) :`, error);
+        console.error(`[${mode}] ÉCHEC sur ${file} (transaction annulée) :`, error);
         process.exit(1);
       } finally {
         client.release();
@@ -80,6 +88,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error) => {
-  console.error('[migrate] Échec :', error);
+  console.error(`[${mode}] Échec :`, error);
   process.exit(1);
 });

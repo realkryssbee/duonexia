@@ -1,6 +1,8 @@
 -- ============================================================================
--- Cockpit — 0002_seed_demo.sql
--- Jeu de données de DÉMONSTRATION (environnement de dev uniquement).
+-- Cockpit — db/seeds/demo.sql (SEED de démonstration)
+-- Jeu de données de DÉMONSTRATION pour le développement uniquement.
+-- À appliquer avec `npm run db:seed` — JAMAIS via db:migrate, JAMAIS en
+-- production : une base réelle ne reçoit pas de données factices.
 --
 -- Idempotent : les ids sont fixes, chaque insert passe par ON CONFLICT DO
 -- NOTHING. Vous pouvez donc le relancer sans risque.

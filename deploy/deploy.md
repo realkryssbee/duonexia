@@ -96,6 +96,9 @@ $env:DATABASE_URL='postgresql://…' ; $env:PGSSLMODE='require'
 npm run db:migrate
 ```
 
+> **Ne jamais lancer `npm run db:seed` en production** : les données de
+> démonstration ne doivent pas entrer dans la base réelle.
+
 ### 2.5 Service + nginx + HTTPS
 
 ```bash

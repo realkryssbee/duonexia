@@ -50,13 +50,13 @@ cockpit/
 ├─ README.md                        ← ce document
 ├─ docs/inventaire-reel.md          # gabarit de saisie des clients/projets réels
 ├─ deploy/                          # déploiement : systemd, nginx, checklist
-├─ db/migrations/
-│  ├─ 0001_init.sql                 # schéma complet (5 tables + index)
-│  └─ 0002_seed_demo.sql            # jeu de démonstration (idempotent)
+├─ db/
+│  ├─ migrations/0001_init.sql      # schéma réel (5 tables + index)
+│  └─ seeds/demo.sql                # données de démo, dev uniquement (db:seed)
 ├─ server/                          # ORCHESTRATION + INTÉGRATIONS
 │  ├─ .env.example                  # chaque variable documentée
 │  ├─ package.json / tsconfig.json
-│  ├─ scripts/run-migrations.ts     # applique db/migrations dans l'ordre
+│  ├─ scripts/run-migrations.ts     # db:migrate (schéma) / db:seed (démo)
 │  └─ src/
 │     ├─ index.ts                   # boot : env → pool → scheduler → API
 │     ├─ config/env.ts              # validation stricte de l'environnement
@@ -117,14 +117,16 @@ la base n'est utilisée que comme Postgres managé).
    **Connection string (URI)**.
 2. `cd server && cp .env.example .env`, renseignez `DATABASE_URL`,
    `COCKPIT_USERS`, `COCKPIT_SESSION_SECRET` (≥ 24 caractères).
-3. Appliquez le schéma puis le jeu de démonstration :
+3. Appliquez le schéma (et, en développement seulement, le jeu de démo) :
    ```bash
    cd server
    npm install
-   npm run db:migrate        # applique db/migrations/*.sql dans l'ordre
+   npm run db:migrate        # schéma réel : db/migrations/*.sql, dans l'ordre
+   npm run db:seed           # OPTIONNEL (dev) : données de démonstration
    ```
-   Le runner est idempotent (table `schema_migrations`). Vous pouvez aussi
-   coller les fichiers SQL dans l'éditeur SQL de Supabase, dans l'ordre.
+   Le runner est idempotent (table `schema_migrations`). Le seed ne se lance
+   **jamais** en production. Vous pouvez aussi coller les fichiers SQL dans
+   l'éditeur SQL de Supabase, dans l'ordre.
 
 ### 3.2 Le serveur
 
@@ -192,7 +194,7 @@ docker run -d --name cockpit-pg-test -p 55432:5432 \
   postgres:16-alpine
 $env:DATABASE_URL='postgresql://cockpit:cockpit-test@localhost:55432/cockpit'
 $env:PGSSLMODE='disable'
-npm run db:migrate && npm run dev
+npm run db:migrate && npm run db:seed && npm run dev
 ```
 
 ---
@@ -258,8 +260,9 @@ Structure des payloads d'activité (V1) :
 
 Utilisez l'**éditeur de table** de Supabase ou des `INSERT` SQL : c'est la
 méthode prévue par la spec pour la première saisie des quinze projets
-(« schéma + saisie manuelle »). Le seed `0002_seed_demo.sql` montre le format
-exact (montants en `numeric`, `environnements` en jsonb).
+(« schéma + saisie manuelle »). Le seed `db/seeds/demo.sql` (via `npm run
+db:seed`, dev uniquement) montre le format exact (montants en `numeric`,
+`environnements` en jsonb).
 
 ---
 

@@ -2,7 +2,7 @@
 
 Document de travail **interne** pour la saisie des clients, projets et
 branchements réels dans Supabase (Table Editor ou SQL, en s'inspirant de
-`db/migrations/0002_seed_demo.sql`).
+`db/seeds/demo.sql`, appliqué en dev par `npm run db:seed`).
 
 Rappel des slugs autorisés (contraintes SQL) :
 

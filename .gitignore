@@ -1,0 +1,20 @@
+# Secrets — jamais versionnés
+.env
+.env.*
+!.env.example
+
+# Dépendances
+node_modules/
+
+# Builds
+dist/
+build/
+
+# Journaux et fichiers système
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

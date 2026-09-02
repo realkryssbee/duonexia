@@ -10,6 +10,7 @@
 
 import 'dotenv/config';
 import { readdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 
@@ -54,7 +55,9 @@ async function main(): Promise<void> {
         console.info(`[migrate] déjà appliquée, ignorée : ${file}`);
         continue;
       }
-      const sql = await readFile(new URL(file, migrationsDir), 'utf8');
+      // migrationsDir est un chemin de fichiers système (fileURLToPath) :
+      // on joint avec path, jamais avec new URL.
+      const sql = await readFile(path.join(migrationsDir, file), 'utf8');
 
       const client = await pool.connect();
       try {

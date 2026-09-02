@@ -15,6 +15,7 @@ import type { AlerteProjet, DashboardResponse, Projet } from '../types';
 export default function DashboardPage() {
   const [donnees, setDonnees] = useState<DashboardResponse | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [synchro, setSynchro] = useState<{ etat: 'enCours' | 'ok' | 'erreur'; message: string } | null>(null);
 
   const charger = useCallback(() => {
     setErreur(null);
@@ -29,6 +30,25 @@ export default function DashboardPage() {
   useEffect(() => {
     charger();
   }, [charger]);
+
+  // Déclenche la synchronisation (écritures internes uniquement : le socle
+  // reste en lecture seule vis-à-vis des systèmes externes).
+  const lancerSync = async () => {
+    setSynchro({ etat: 'enCours', message: 'Synchronisation en cours…' });
+    try {
+      const resultat = await api.lancerSync();
+      setSynchro({
+        etat: 'ok',
+        message: `Synchronisation terminée en ${resultat.duree_ms} ms : ${resultat.reussites}/${resultat.branchements} branchement(s) OK, ${resultat.evenementsInseres} événement(s) inséré(s), ${resultat.echecs} échec(s).`,
+      });
+      charger();
+    } catch (error) {
+      setSynchro({
+        etat: 'erreur',
+        message: `Synchronisation en échec : ${error instanceof Error ? error.message : 'erreur inconnue'}`,
+      });
+    }
+  };
 
   if (erreur) {
     return (
@@ -60,14 +80,34 @@ export default function DashboardPage() {
             Produit le {new Date(donnees.produitLe).toLocaleString('fr-BE')}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={charger}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-        >
-          Actualiser
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void lancerSync()}
+            disabled={synchro?.etat === 'enCours'}
+            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+          >
+            {synchro?.etat === 'enCours' ? 'Synchronisation…' : 'Synchroniser maintenant'}
+          </button>
+          <button
+            type="button"
+            onClick={charger}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            Actualiser
+          </button>
+        </div>
       </div>
+
+      {synchro && (
+        <p
+          className={`text-sm ${
+            synchro.etat === 'erreur' ? 'text-rose-700' : synchro.etat === 'ok' ? 'text-emerald-700' : 'text-slate-500'
+          }`}
+        >
+          {synchro.message}
+        </p>
+      )}
 
       {/* Chiffres clés */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

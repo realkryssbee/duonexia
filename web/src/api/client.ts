@@ -100,4 +100,9 @@ export const api = {
   // --- Recherche transverse -----------------------------------------------------
   recherche: (q: string) =>
     http<RechercheResponse>(`/api/recherche?q=${encodeURIComponent(q)}`),
+
+  // --- Journal d'audit et synchronisation -----------------------------------------
+  journal: (limit = 100) =>
+    http<{ entrees: import('../types').JournalEntree[] }>(`/api/journal?limit=${limit}`),
+  lancerSync: () => http<import('../types').SyncSummary>('/api/sync/run', { method: 'POST' }),
 };

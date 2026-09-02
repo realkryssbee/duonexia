@@ -151,12 +151,47 @@ Connectez-vous avec un des comptes de `COCKPIT_USERS` (ex. par défaut
 
 ### 3.4 Déclencher la synchronisation à la main
 
+Depuis l'interface : bouton **« Synchroniser maintenant »** du tableau de bord
+(résumé affiché : branchements OK, événements insérés, échecs). En ligne de
+commande :
+
 ```bash
-curl -X POST http://localhost:4000/api/sync/run -b cookies.txt
+curl -c cookies.txt -X POST http://localhost:4000/api/auth/login \
+     -H 'content-type: application/json' \
+     -d '{"email":"a@duonexia.be","password":"changez-moi"}'
+curl -b cookies.txt -X POST http://localhost:4000/api/sync/run
 ```
-ou, depuis l'interface, une fois le bouton exposé (V1 : curl). Chaque appel
-externe est tracé dans `journal_outils` : vérifiez-le avec
-`GET /api/journal?limit=20`.
+
+Chaque appel externe est tracé dans `journal_outils` : consultez-le depuis
+l'interface (menu **Journal**) ou via `GET /api/journal?limit=20`.
+
+### 3.5 Recettes de validation (optionnel)
+
+Deux scripts prouvent que le socle tient, contre un serveur réel et une base
+migrée + seedée (`db/migrations`). Ils ne requièrent aucun jeton réel (les
+intégrations `fake` du seed suffisent) :
+
+```bash
+# 1. Recette de bout en bout : session, cloisonnement, lectures, recherche,
+#    sync idempotente, journal (26 vérifications)
+$env:COCKPIT_API_URL='http://localhost:4000'   # serveur déjà lancé
+npx tsx scripts/smoke-e2e.ts
+
+# 2. Mécanisme de journalisation (transport contre un serveur HTTP factice)
+$env:DATABASE_URL='…' ; $env:PGSSLMODE='require'
+npx tsx scripts/test-journal.ts
+```
+
+Exemple de base de test jetable avec Docker :
+
+```bash
+docker run -d --name cockpit-pg-test -p 55432:5432 \
+  -e POSTGRES_USER=cockpit -e POSTGRES_PASSWORD=cockpit-test -e POSTGRES_DB=cockpit \
+  postgres:16-alpine
+$env:DATABASE_URL='postgresql://cockpit:cockpit-test@localhost:55432/cockpit'
+$env:PGSSLMODE='disable'
+npm run db:migrate && npm run dev
+```
 
 ---
 

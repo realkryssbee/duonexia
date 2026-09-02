@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import ClientPage from './pages/ClientPage';
 import ClientsPage from './pages/ClientsPage';
 import DashboardPage from './pages/DashboardPage';
+import JournalPage from './pages/JournalPage';
 import LoginPage from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProjetPage from './pages/ProjetPage';
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/clients/:id" element={<ClientPage />} />
         <Route path="/projets/:id" element={<ProjetPage />} />
         <Route path="/recherche" element={<RecherchePage />} />
+        <Route path="/journal" element={<JournalPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

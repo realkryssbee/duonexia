@@ -8,6 +8,7 @@ const NAVIGATION = [
   { to: '/', label: 'Tableau de bord', fin: true },
   { to: '/clients', label: 'Clients', fin: false },
   { to: '/recherche', label: 'Recherche', fin: false },
+  { to: '/journal', label: 'Journal', fin: false },
 ];
 
 export default function Layout() {

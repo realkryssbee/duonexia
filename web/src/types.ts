@@ -108,3 +108,37 @@ export interface RechercheResponse {
   activites: Activite[];
   nombre: { clients: number; projets: number; activites: number };
 }
+
+export interface JournalEntree {
+  id: number;
+  outil: string;
+  arguments: Record<string, unknown> | null;
+  resultat: Record<string, unknown> | null;
+  duree_ms: number | null;
+  statut: string;
+  horodatage: string;
+  utilisateur: string;
+}
+
+export interface SyncDetail {
+  projetId: string;
+  type: string;
+  identifiantExterne: string;
+  ok: boolean;
+  evenementsRecus: number;
+  evenementsInseres: number;
+  apercuRafraichi: boolean;
+  duree_ms: number;
+  erreur: string | null;
+}
+
+export interface SyncSummary {
+  debut: string;
+  fin: string;
+  duree_ms: number;
+  branchements: number;
+  reussites: number;
+  echecs: number;
+  evenementsInseres: number;
+  details: SyncDetail[];
+}

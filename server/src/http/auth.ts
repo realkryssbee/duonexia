@@ -93,10 +93,11 @@ export function readSessionFromCookie(cookieHeader: string | undefined): { email
 
 export function setSessionCookie(reply: FastifyReply, email: string): void {
   const token = createSessionToken(email);
-  const secure = env.isProduction || env.cookieSecure ? '; Secure' : '';
+  // SameSite=none impose Secure (les navigateurs refusent None sans HTTPS).
+  const secure = env.isProduction || env.cookieSecure || env.cookieSameSite === 'none' ? '; Secure' : '';
   reply.header(
     'set-cookie',
-    `${SESSION_COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${env.sessionTtlHours * 3600}${secure}`
+    `${SESSION_COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=${env.cookieSameSite}; Max-Age=${env.sessionTtlHours * 3600}${secure}`
   );
 }
 

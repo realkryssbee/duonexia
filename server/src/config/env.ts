@@ -87,6 +87,14 @@ if (!['require', 'verify-full', 'disable'].includes(pgSslMode)) {
   throw new Error(`[config] PGSSLMODE invalide : ${pgSslMode} (require | verify-full | disable).`);
 }
 
+// SameSite du cookie de session. 'none' n'est utile qu'en test lorsque le
+// front (ex. *.vercel.app) et l'API (ex. tunnel HTTPS) sont sur des SITES
+// différents ; en production nominale (même domaine racine) on garde 'lax'.
+const cookieSameSite = optional('COOKIE_SAMESITE', 'lax').toLowerCase();
+if (!['lax', 'none'].includes(cookieSameSite)) {
+  throw new Error(`[config] COOKIE_SAMESITE invalide : ${cookieSameSite} (lax | none).`);
+}
+
 export const env = {
   nodeEnv,
   isProduction: nodeEnv === 'production',
@@ -104,6 +112,7 @@ export const env = {
   sessionSecret,
   sessionTtlHours: optionalInt('SESSION_TTL_HOURS', 12),
   cookieSecure: optional('COOKIE_SECURE', 'false') === 'true',
+  cookieSameSite: cookieSameSite as 'lax' | 'none',
   webOrigins: parseOrigins(optional('WEB_ORIGINS', 'http://localhost:5173')),
 
   // Synchronisation planifiée

@@ -1,0 +1,38 @@
+# Cockpit — service systemd (VPS)
+#
+# Installation :
+#   sudo cp deploy/cockpit.service /etc/systemd/system/cockpit.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now cockpit
+#
+# Les secrets vivent dans /opt/cockpit/server/.env (voir deploy/deploy.md).
+# Adapter WorkingDirectory / User si le chemin d'installation diffère.
+
+[Unit]
+Description=Cockpit — poste de pilotage Duonexia (API)
+Documentation=https://github.com/duonexia/cockpit
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=cockpit
+Group=cockpit
+WorkingDirectory=/opt/cockpit/server
+
+# Environnement chargé depuis le fichier .env (jamais dans ce fichier).
+EnvironmentFile=/opt/cockpit/server/.env
+
+# Le binaire compilé : npm run build produit dist/index.js.
+ExecStart=/usr/bin/node /opt/cockpit/server/dist/index.js
+Restart=always
+RestartSec=5
+
+# Durcissement minimal raisonnable pour un service Node.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/opt/cockpit/server
+
+[Install]
+WantedBy=multi-user.target

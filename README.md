@@ -48,6 +48,8 @@ base interne.
 ```
 cockpit/
 ├─ README.md                        ← ce document
+├─ docs/inventaire-reel.md          # gabarit de saisie des clients/projets réels
+├─ deploy/                          # déploiement : systemd, nginx, checklist
 ├─ db/migrations/
 │  ├─ 0001_init.sql                 # schéma complet (5 tables + index)
 │  └─ 0002_seed_demo.sql            # jeu de démonstration (idempotent)
@@ -310,6 +312,9 @@ Aucune modification des couches Interface ni Orchestration. Le module factice
 ---
 
 ## 9. Déploiement
+
+> La procédure complète et vérifiable vit dans **`deploy/deploy.md`**
+> (fichiers prêts à l'emploi : `deploy/cockpit.service`, `deploy/cockpit.nginx.conf`).
 
 ### 9.1 Interface — Vercel
 
